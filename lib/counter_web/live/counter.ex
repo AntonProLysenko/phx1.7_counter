@@ -2,7 +2,10 @@ defmodule CounterWeb.Counter  do
  use CounterWeb, :live_view
  alias Counter.Count
  alias Phoenix.PubSub
+ alias Counter.Presence
+
  @topic Count.topic
+ @presence_topic "presence"
   @doc """
    CounterWeb.Endpoint.subscribe(@topic) for subscribing(connecting) to a chanel for multiClient data Share
 
@@ -15,8 +18,13 @@ defmodule CounterWeb.Counter  do
   # CounterWeb.Endpoint.subscribe(@topic)
   PubSub.subscribe(Counter.PubSub, @topic)
 
-  # {:ok, assign(socket, :val, 0)}
-  {:ok, assign(socket, :val, Count.current())}
+  Presence.track(self(), @presence_topic, socket.id, %{})
+  CounterWeb.Endpoint.subscribe(@presence_topic)
+
+  initial_present =
+    Presence.list(@presence_topic) |> map_size
+
+  {:ok, assign(socket, val: Count.current(), present: initial_present) }
  end
  def handle_event("inc", _unsigned_params, socket) do
   # new_state = update(socket, :val, fn val ->IO.inspect(socket.assigns, label: "Assigns in Socket State"); val + 1 end)#event listener, here we are increasing state by one
@@ -42,6 +50,11 @@ defmodule CounterWeb.Counter  do
 def handle_info({:count, count}, socket) do
   {:noreply, assign(socket, val: count)}
 end
+
+def handle_info(%{event: "presence_diff", payload: %{ joins: joins, leaves: leaves}},%{assigns: %{present: present}} =  socket) do
+  new_present = present + map_size(joins) - map_size(leaves)
+  {:noreply, assign(socket, :present, new_present)}
+end
 # @doc """
 # in assigns arg we have saved variables(in our case we created :val variable in mount function), assigns saved in socket.assigns
 # ~H
@@ -66,6 +79,7 @@ end
   def render(assigns) do
     ~H"""
       <.live_component module={CounterComponent} id="counter" val={@val}/>
+      <.live_component module={PresenceComponent} id="presence" present={@present} />
     """
   end
 end
