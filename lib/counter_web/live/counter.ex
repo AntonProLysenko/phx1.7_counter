@@ -1,5 +1,7 @@
 defmodule CounterWeb.Counter  do
  use CounterWeb, :live_view
+ alias Counter.Count
+ alias Phoenix.PubSub
  @topic "live"
   @doc """
    CounterWeb.Endpoint.subscribe(@topic) for subscribing(connecting) to a chanel for multiClient data Share
@@ -10,27 +12,36 @@ defmodule CounterWeb.Counter  do
    {:ok, assign(socket, :val, 0)} - Socket is out state which we'll be tracking in this process, val is a state variable which will be used in here
   """
  def mount(_params, _session, socket) do
-  CounterWeb.Endpoint.subscribe(@topic)
-  {:ok, assign(socket, :val, 0)}
+  # CounterWeb.Endpoint.subscribe(@topic)
+  PubSub.subscribe(Counter.PubSub, @topic)
+
+  # {:ok, assign(socket, :val, 0)}
+  {:ok, assign(socket, :val, Count.current())}
  end
  def handle_event("inc", _unsigned_params, socket) do
-  new_state = update(socket, :val, fn val ->IO.inspect(socket.assigns, label: "Assigns in Socket State"); val + 1 end)#event listener, here we are increasing state by one
-  CounterWeb.Endpoint.broadcast_from(self(), @topic, "inc", new_state.assigns) # sends the message from self()(current procces) to the @topic with key "inc" and value newstate.assigns
-  {:noreply, new_state}
+  # new_state = update(socket, :val, fn val ->IO.inspect(socket.assigns, label: "Assigns in Socket State"); val + 1 end)#event listener, here we are increasing state by one
+  # CounterWeb.Endpoint.broadcast_from(self(), @topic, "inc", new_state.assigns) # sends the message from self()(current procces) to the @topic with key "inc" and value newstate.assigns
+  # {:noreply, new_state}
+  {:noreply, assign(socket, :val, Count.incr())}
  end
 
  def handle_event("dec", _unsigned_params, socket) do
-  new_state = update(socket, :val, &(&1 - 1))# same as above event just diff math
-  CounterWeb.Endpoint.broadcast_from(self(), @topic, "dec", new_state.assigns)
-  {:noreply, new_state}
+  # new_state = update(socket, :val, &(&1 - 1))# same as above event just diff math
+  # CounterWeb.Endpoint.broadcast_from(self(), @topic, "dec", new_state.assigns)
+  # {:noreply, new_state}
+  {:noreply, assign(socket, :val, Count.decr())}
  end
  @doc """
  Handles Elix process messages where msg is received message and socket is Phoenix.Socket
  return means don't send this msg to the socket again(since inf loop will be fired)
  """
- def handle_info(msg, socket) do
-  {:noreply, assign(socket, val: msg.payload.val)}
- end
+#  def handle_info(msg, socket) do
+#   {:noreply, assign(socket, val: msg.payload.val)}
+#  end
+
+def handle_info({:count, count}, socket) do
+  {:noreply, assign(socket, val: count)}
+end
 # @doc """
 # in assigns arg we have saved variables(in our case we created :val variable in mount function), assigns saved in socket.assigns
 # ~H
