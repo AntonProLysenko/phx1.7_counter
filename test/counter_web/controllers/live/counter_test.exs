@@ -8,21 +8,27 @@ defmodule CounterWeb.PageControllerTest do
   end
 
   test "Increment", %{conn: conn} do
-    {:ok, view, _html} = live(conn, "/")
-    assert render_click(view, :inc) =~ "Counter: 1"
+    {:ok, view, html} = live(conn, "/")
+    current = Counter.Count.current()
+    assert html =~ "Counter: #{current}"
+    assert render_click(view, :inc) =~ "Counter: #{current + 1}"
   end
 
 
   test "Decrement", %{conn: conn} do
-    {:ok, view, _html} = live(conn, "/")
-    assert render_click(view, :dec) =~ "Counter: -1"
+    {:ok, view, html} = live(conn, "/")
+    current = Counter.Count.current()
+    assert html =~ "Counter: #{current}"
+    assert render_click(view, :dec) =~ "Counter:  #{current - 1}"
   end
 
   test "handle_info/2 brodcast msg", %{conn: conn} do
-    {:ok, view, _html} = live(conn, "/")
-    {:ok, view2, _html} = live(conn, "/")
+    {:ok, view, disconnected_html} = live(conn, "/")
+    current = Counter.Count.current()
 
-    assert render_click(view, :inc) =~ "Counter: 1"
-    assert render_click(view2, :inc) =~ "Counter: 2"
+    assert disconnected_html =~ "Counter: #{current}"
+    assert render(view) =~ "Counter: #{current}"
+    send(view.pid, {:count, 2})
+    assert render(view) =~ "Counter: 2"
   end
 end

@@ -2,7 +2,7 @@ defmodule CounterWeb.Counter  do
  use CounterWeb, :live_view
  alias Counter.Count
  alias Phoenix.PubSub
- @topic "live"
+ @topic Count.topic
   @doc """
    CounterWeb.Endpoint.subscribe(@topic) for subscribing(connecting) to a chanel for multiClient data Share
 

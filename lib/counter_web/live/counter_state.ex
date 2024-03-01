@@ -23,15 +23,15 @@ defmodule Counter.Count do
   end
 
   def incr()do
-    GenServer.call(@name, :incr)
+    GenServer.call @name, :incr
   end
 
   def decr()do
-    GenServer.call(@name, :decr)
+    GenServer.call @name, :decr
   end
 
   def current() do
-    GenServer.call(@name, :current)
+    GenServer.call @name, :current
   end
 
 
@@ -45,16 +45,17 @@ defmodule Counter.Count do
  end
 
   def handle_call(:incr, _from, count) do
-    new_count = count+1
-    PubSub.broadcast(Counter.PubSub, topic(), {:count, new_count})
-    {:reply, new_count, new_count}
+    make_change(count, +1)
   end
 
   def handle_call(:decr, _from, count) do
-    new_count = count-1
+    make_change(count, -1)
+  end
+
+  defp make_change(count, change) do
+    new_count = count + change
     PubSub.broadcast(Counter.PubSub, topic(), {:count, new_count})
     {:reply, new_count, new_count}
   end
-
 
 end
