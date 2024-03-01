@@ -1,17 +1,34 @@
 defmodule CounterWeb.Counter  do
  use CounterWeb, :live_view
 
+ @topic "live"
+
  def mount(_params, _session, socket) do
+  CounterWeb.Endpoint.subscribe(@topic) #subscribing(connecting) to a chanel for multiClient data Share
+  #Each client connected to the App subscribes to the @topic
+  #so when the count is updated on any of the clients, all the other clients see the same value with no using of database.
   {:ok, assign(socket, :val, 0)}#Socket is out state which we'll be tracking in this process, val is a state variable which will be used in here
  end
 
  def handle_event("inc", _unsigned_params, socket) do
-
-  {:noreply, update(socket, :val, fn val ->IO.inspect(socket.assigns); val + 1 end)}#event listener, here we are increasing state by one
+  new_state = update(socket, :val, fn val ->IO.inspect(socket.assigns, label: "Assigns in Socket State"); val + 1 end)#event listener, here we are increasing state by one
+  CounterWeb.Endpoint.broadcast_from(self(), @topic, "inc", new_state.assigns) # sends the message from self()(current procces) to the @topic with key "inc" and value newstate.assigns
+  {:noreply, new_state}
  end
 
  def handle_event("dec", _unsigned_params, socket) do
-  {:noreply, update(socket, :val, &(&1 - 1))}# same as above event
+  new_state = update(socket, :val, &(&1 - 1))# same as above event just diff math
+  CounterWeb.Endpoint.broadcast_from(self(), @topic, "dec", new_state.assigns)
+  {:noreply, new_state}
+ end
+
+
+ @doc """
+ Handles Elix process messages where msg is received message and socket is Phoenix.Socket
+ return means don't send this msg to the socket again(since inf loop will be fired)
+ """
+ def handle_info(msg, socket) do
+  {:noreply, assign(socket, val: msg.payload.val)}
  end
 
 
@@ -24,8 +41,8 @@ defmodule CounterWeb.Counter  do
     <h1 class = "text-4x1 font-bold text-center">The count is:<%= @val %></h1>
 
     <p class = "text-center">
-      <.button phx-click="dec">-</.button><!-- phx-click fires dec event which we are listening above-->
-      <.button phx-click = "inc">+</.button>
+      <.button phx-click="dec" class="w-20 bg-red-500 hover:bg-red-600">-</.button><!-- phx-click fires dec event which we are listening above-->
+      <.button phx-click = "inc" class="w-20 bg-green-500 hover:bg-green-600">+</.button>
     </p>
    </div>
    """
