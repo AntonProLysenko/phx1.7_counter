@@ -31,21 +31,30 @@ defmodule CounterWeb.Counter  do
  def handle_info(msg, socket) do
   {:noreply, assign(socket, val: msg.payload.val)}
  end
- @doc """
-  in assigns arg we have saved variables(in our case we created :val variable in mount function), assigns saved in socket.assigns
-  ~H
-   this is somilar to react <></> component means to treat code below as html,
-  but also it will automaticaly fire mount/3 function and every update the mount function will be fired again
- """
- def render(assigns) do
-   ~H"""
-   <div>
-    <h1 class = "text-4x1 font-bold text-center">The count is:<%= @val %></h1>
-    <p class = "text-center">
-      <.button phx-click="dec" class="w-20 bg-red-500 hover:bg-red-600">-</.button><!-- phx-click fires dec event which we are listening above-->
-      <.button phx-click = "inc" class="w-20 bg-green-500 hover:bg-green-600">+</.button>
-    </p>
-   </div>
-   """
- end
+# @doc """
+# in assigns arg we have saved variables(in our case we created :val variable in mount function), assigns saved in socket.assigns
+# ~H
+# this is somilar to react <></> component means to treat code below as html,
+# but also it will automaticaly fire mount/3 function and every update the mount function will be fired again
+# """
+#  def render(assigns) do
+#    ~H"""
+#    <div>
+#     <h1 class = "text-4x1 font-bold text-center">The count is:<%= @val %></h1>
+#     <p class = "text-center">
+#       <.button phx-click="dec" class="bg-red-500 w-20 hover:bg-green-600">-</.button><!-- phx-click fires dec event which we are listening above-->
+#       <.button phx-click = "inc" class="w-20 bg-blue-500 hover:bg-yellow-600">+</.button>
+#     </p>
+#    </div>
+#    """
+#  end
+
+  @doc """
+  replaced above code with live component ./counter_component.ex
+  """
+  def render(assigns) do
+    ~H"""
+      <.live_component module={CounterComponent} id="counter" val={@val}/>
+    """
+  end
 end
