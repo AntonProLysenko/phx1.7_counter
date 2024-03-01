@@ -47,14 +47,17 @@ defmodule CounterWeb.Counter  do
 #   {:noreply, assign(socket, val: msg.payload.val)}
 #  end
 
-def handle_info({:count, count}, socket) do
-  {:noreply, assign(socket, val: count)}
-end
+  def handle_info({:count, count}, socket) do
+    {:noreply, assign(socket, val: count)}
+  end
 
-def handle_info(%{event: "presence_diff", payload: %{ joins: joins, leaves: leaves}},%{assigns: %{present: present}} =  socket) do
-  new_present = present + map_size(joins) - map_size(leaves)
-  {:noreply, assign(socket, :present, new_present)}
-end
+  def handle_info(
+        %{event: "presence_diff", payload: %{joins: joins, leaves: leaves}},
+        %{assigns: %{present: present}} = socket) do
+    new_present = present + map_size(joins) - map_size(leaves)
+
+    {:noreply, assign(socket, :present, new_present)}
+  end
 # @doc """
 # in assigns arg we have saved variables(in our case we created :val variable in mount function), assigns saved in socket.assigns
 # ~H
