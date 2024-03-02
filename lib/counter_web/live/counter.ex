@@ -1,11 +1,11 @@
 defmodule CounterWeb.Counter  do
- use CounterWeb, :live_view
- alias Counter.Count
- alias Phoenix.PubSub
- alias Counter.Presence
+  use CounterWeb, :live_view
+  alias Counter.Count
+  alias Phoenix.PubSub
+  alias Counter.Presence
 
- @topic Count.topic
- @presence_topic "presence"
+  @topic Count.topic
+  @presence_topic "presence"
   @doc """
    CounterWeb.Endpoint.subscribe(@topic) for subscribing(connecting) to a chanel for multiClient data Share
 
@@ -17,14 +17,16 @@ defmodule CounterWeb.Counter  do
  def mount(_params, _session, socket) do
   # CounterWeb.Endpoint.subscribe(@topic)
   PubSub.subscribe(Counter.PubSub, @topic)
-
-  Presence.track(self(), @presence_topic, socket.id, %{})
   CounterWeb.Endpoint.subscribe(@presence_topic)
 
-  initial_present =
-    Presence.list(@presence_topic) |> map_size
+  Presence.track(self(), @presence_topic, socket.id, %{})
 
-  {:ok, assign(socket, val: Count.current(), present: initial_present) }
+    initial_present =
+      Presence.list(@presence_topic)
+      |> map_size
+
+    IO.inspect( Presence.list(@presence_topic), label: "initial_present")
+    {:ok, assign(socket, val:  Count.current(), present: initial_present) }
  end
  def handle_event("inc", _unsigned_params, socket) do
   # new_state = update(socket, :val, fn val ->IO.inspect(socket.assigns, label: "Assigns in Socket State"); val + 1 end)#event listener, here we are increasing state by one
@@ -52,9 +54,11 @@ defmodule CounterWeb.Counter  do
   end
 
   def handle_info(
-        %{event: "presence_diff", payload: %{joins: joins, leaves: leaves}},
-        %{assigns: %{present: present}} = socket) do
+    %{event: "presence_diff", payload: %{joins: joins, leaves: leaves}},
+    %{assigns: %{present: present}} = socket
+    ) do
     new_present = present + map_size(joins) - map_size(leaves)
+
 
     {:noreply, assign(socket, :present, new_present)}
   end

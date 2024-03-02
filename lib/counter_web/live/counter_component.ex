@@ -12,7 +12,7 @@ defmodule CounterComponent do
       <div class="text-center">
         <h1 class="text-4xl font-bold text-center"> Counter: <%= @val %> </h1>
         <button phx-click="dec" class={btn("red")}>-</button>
-        <button phx-click="inc" class={btn("green")}>+</button>
+        <button phx-click="inc" class={btn("blue")}>+</button>
       </div>
 
     """

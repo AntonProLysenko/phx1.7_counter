@@ -12,7 +12,7 @@ defmodule Counter.Application do
       Counter.Count,
       #Staer the telemetry
       CounterWeb.Telemetry,
-      {DNSCluster, query: Application.get_env(:counter, :dns_cluster_query) || :ignore},
+      # {DNSCluster, query: Application.get_env(:counter, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Counter.PubSub},
       Counter.Presence,
       # Start a worker by calling: Counter.Worker.start_link(arg)
