@@ -4,6 +4,7 @@ defmodule CounterWeb.Counter  do
   alias Phoenix.PubSub
   alias Counter.Presence
 
+
   @topic Count.topic
   @presence_topic "presence"
   @doc """
@@ -17,17 +18,18 @@ defmodule CounterWeb.Counter  do
  def mount(_params, _session, socket) do
   # CounterWeb.Endpoint.subscribe(@topic)
   PubSub.subscribe(Counter.PubSub, @topic)
-  CounterWeb.Endpoint.subscribe(@presence_topic)
+  PubSub.subscribe(Counter.PubSub, @presence_topic)
 
-  Presence.track(self(), @presence_topic, socket.id, %{})
+  Presence.track(self(), @presence_topic, socket.id, socket)
 
     initial_present =
       Presence.list(@presence_topic)
       |> map_size
 
-    IO.inspect( Presence.list(@presence_topic), label: "initial_present")
+    # IO.inspect( Presence.list(@presence_topic), label: "initial_present")
     {:ok, assign(socket, val:  Count.current(), present: initial_present) }
  end
+
  def handle_event("inc", _unsigned_params, socket) do
   # new_state = update(socket, :val, fn val ->IO.inspect(socket.assigns, label: "Assigns in Socket State"); val + 1 end)#event listener, here we are increasing state by one
   # CounterWeb.Endpoint.broadcast_from(self(), @topic, "inc", new_state.assigns) # sends the message from self()(current procces) to the @topic with key "inc" and value newstate.assigns
@@ -57,8 +59,7 @@ defmodule CounterWeb.Counter  do
     %{event: "presence_diff", payload: %{joins: joins, leaves: leaves}},
     %{assigns: %{present: present}} = socket
     ) do
-    new_present = present + map_size(joins) - map_size(leaves)
-
+      new_present = present + map_size(joins) - map_size(leaves)
 
     {:noreply, assign(socket, :present, new_present)}
   end
@@ -83,10 +84,20 @@ defmodule CounterWeb.Counter  do
   @doc """
   replaced above code with live component ./counter_component.ex
   """
-  def render(assigns) do
-    ~H"""
-      <.live_component module={CounterComponent} id="counter" val={@val}/>
-      <.live_component module={PresenceComponent} id="presence" present={@present} />
-    """
+
+
+  def join(@presence_topic, _params, socket) do
+    send(self(), :after_join)
+    {:ok, assign(socket, :user_id)}
   end
+
+  def handle_info(:after_join, socket) do
+    {:ok, _} = Presence.track(socket, socket.assigns.user_id, %{
+      online_at: inspect(System.system_time(:second))
+    })
+
+    assign(socket, "presence_state", Presence.list(socket))
+    {:noreply, socket}
+  end
+
 end
