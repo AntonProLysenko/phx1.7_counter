@@ -18,5 +18,6 @@ defmodule CounterWeb.Router do
     pipe_through :browser
 
     live("/", Counter)
+    live("/something", TestPage)
   end
 end

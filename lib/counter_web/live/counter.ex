@@ -84,20 +84,4 @@ defmodule CounterWeb.Counter  do
   @doc """
   replaced above code with live component ./counter_component.ex
   """
-
-
-  def join(@presence_topic, _params, socket) do
-    send(self(), :after_join)
-    {:ok, assign(socket, :user_id)}
-  end
-
-  def handle_info(:after_join, socket) do
-    {:ok, _} = Presence.track(socket, socket.assigns.user_id, %{
-      online_at: inspect(System.system_time(:second))
-    })
-
-    assign(socket, "presence_state", Presence.list(socket))
-    {:noreply, socket}
-  end
-
 end
